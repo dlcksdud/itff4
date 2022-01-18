@@ -1,0 +1,240 @@
+@charset "UTF-8";
+
+.search_wrap {
+    /* background: #fff; */
+    width: 100%;
+    height: 100%;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.hide {
+    display: none;
+}
+
+.movieserach_wrap .inp_search_wrap {
+    position: relative;
+    background: #f5f5f5;
+    display: inline-block;
+    width: 330px;
+    padding: 10px;
+    z-index: 10;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+}
+
+.search_wrap .inp_search_wrap {
+    position: relative;
+    background: #f5f5f5;
+    border-radius: 50px;
+    -webkit-border-radius: 50px;
+    padding: 0 30px;
+}
+
+.movieserach_wrap .inp_search_wrap .inp_search {
+    float: left;
+    border: 0;
+    background: #f5f5f5;
+    font-size: 18px;
+    line-height: 30px;
+    padding: 0 10px;
+    width: 80%;
+}
+
+.search_wrap .inp_search {
+    float: left;
+    width: 88%;
+    padding: 20px 30px 20px 20px;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    line-height: 40px;
+    border: none;
+    background: none;
+}
+
+input, select, textarea, button {
+    vertical-align: middle;
+}
+
+button {
+    border: 0 none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.wview {
+    display: block;
+}
+
+img {
+    max-width: 100%;
+    vertical-align: middle;
+    width:40px;
+}
+
+.cont {
+    /* max-width: 1000px; */
+    margin: 0 200px;
+    height: 1000px;
+}
+
+#tbl-board {
+    max-width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+    text-align: center;
+    margin: auto;
+}
+
+.table {
+    width: 100%;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgb(255 255 255 / 5%);
+}
+
+.brd_li {
+    position: relative;
+    padding: 25px 0;
+    border-bottom: 1px solid #efefef;
+    border-top: 1px solid #efefef;
+}
+
+.brd_li :first-child {
+    position: relative;
+    width: calc(100% - 150px);
+    float: left;
+    display: inline-block;
+    white-space: nowrap;
+    line-height: 40px;
+    overflow: hidden;
+    font-size: 21px;
+    text-overflow: ellipsis;
+    max-width: 90%;
+    letter-spacing: -0.8px;
+    border-top: 0px solid #dee2e6;
+    padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.brd_li :last-child {
+    font-size: 18px;
+    margin-top: 2px;
+    float: right;
+    line-height: 40px;
+    border-top: 0px solid #dee2e6;
+    padding: 0.75rem;
+    vertical-align: top;
+    color: #222222;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgb(255 255 255 / 5%);
+}
+
+.pagenation {
+    padding: 30px 0;
+    margin: 0 auto;
+    text-align: center;
+    font-family: 'Lato','돋움',Dotum,'굴림',Gulim, AppleGothic, Sans-serif;
+    width: 100%;
+}
+.justify-content-center {
+    justify-content: center!important;
+}
+
+dl, ul, ol, menu, li {
+    list-style: none;
+}
+
+.container_ {
+    position: relative;
+    margin: 0 auto;
+    width: 1280px;
+    max-width: 1280px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.wid100 {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.tbl_schedule2 {
+    border-top: 2px solid #111;
+    border-left-width: 0;
+    border-right-width: 1px;
+}
+
+.tbl_schedule2 > thead > tr > th {
+    display: none;
+    padding: 15px 18px;
+    line-height: 1.5;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 300;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top !important;
+}
+
+.en {
+    font-family: 'Noto Sans KR', sans-serif;
+    letter-spacing: 0 !important;
+}
+
+
+
+.tbl_schedule2 > tbody > tr > td.theater {
+    text-align: left;
+}
+
+.tbl_schedule2 > tbody > tr > td, .tbl_schedule2 > tbody > tr > td {
+    padding: 19px 18px;
+    line-height: 1.5;
+    font-size: 20px;
+    font-weight: 100;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle !important;
+    text-align: center;
+}
+
+#noMovie {
+	text-align: center;
+    font-size: 28px;
+    padding: 80px;
+    line-height: 47px;
+}
+
+.schedule {
+	padding-bottom: 30px;
+}
+
+.tbl_schedule2 > tbody > tr > th {
+	padding: 19px 18px;
+    line-height: 1.5;
+    font-size: 24px;
+    font-weight: 500;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top !important;
+    text-align: center;
+}
+
+.page-item.active .page-link {
+    z-index: 1;
+    color: #000;
+    background-color:#34495e3b;
+    border-color: #34495e00;
+}
+
+#titleEng {
+	font-size:16px;
+}
+
+/*아이콘 크기*/
+ion-icon {
+  font-size: 40px;
+}

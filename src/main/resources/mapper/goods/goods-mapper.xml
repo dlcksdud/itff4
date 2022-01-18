@@ -1,0 +1,888 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="goods">
+	
+	<!-- <select id="selectGoodsList" resultType="goods">
+		select 
+			* 
+		from 
+			goods
+		order by
+			p_id desc
+	</select> -->
+	
+	<!-- <select id="selectGoodsList" resultMap="goodsLikeJoinMap">
+		select *
+		from goods
+		left join goods_like
+		using (p_id)
+		where user_id = #{loginId}
+		or user_id is null
+		order by p_id desc
+	</select> -->
+	
+	<!-- <select id="selectGoodsList" resultMap="goodsLikeJoinMap">
+		select e.* from (
+		(select *
+		    from goods
+		    left join goods_like
+		    using (p_id)
+		    where user_id != #{loginId}
+		    and p_id not in 
+		        (select p_id
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where user_id is null
+		        union
+		        select p_id
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where user_id = #{loginId})
+		)
+		union
+		(select *
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where user_id is null
+		    union
+		        select *
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where user_id = #{loginId})
+		) e
+		order by p_id desc
+	</select> -->
+	
+	<!-- <select id="selectGoodsList" resultMap="goodsLikeJoinMap">
+		select * from (
+		select * FROM goods_like 
+		WHERE  ROWID IN (SELECT MAX(ROWID) FROM goods_like GROUP BY p_id)
+		order by p_id
+		)
+		right join goods
+		using (p_id)
+		order by p_id desc
+	</select> -->
+	
+	<select id="selectGoodsList" resultMap="goodsLikeJoinMap">
+		select * from (
+	        (
+	        select * from (SELECT *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id in
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            GROUP by p_id 
+	            HAVING COUNT(p_id) > 1
+	            )
+	        and user_id != #{loginId}
+	        and p_id not in 
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            where p_id in
+	                (
+	                SELECT p_id
+	                from goods
+	                left join goods_like
+	                using (p_id)
+	                GROUP by p_id 
+	                HAVING COUNT(p_id) > 1
+	                )
+	            and user_id = #{loginId}
+	            )
+	        )
+	        where rowid in (select max(rowid) from (SELECT *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id in
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            GROUP by p_id 
+	            HAVING COUNT(p_id) > 1
+	            )
+	        and user_id != #{loginId}
+	        and p_id not in 
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            where p_id in
+	                (
+	                SELECT p_id
+	                from goods
+	                left join goods_like
+	                using (p_id)
+	                GROUP by p_id 
+	                HAVING COUNT(p_id) > 1
+	                )
+	            and user_id = #{loginId}
+	            )) group by p_id)
+	        )
+		union
+	        (SELECT *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id in
+	        (
+	        SELECT p_id
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        GROUP by p_id 
+	        HAVING COUNT(p_id) > 1
+	        )
+	        and user_id = #{loginId}
+	        )
+		union
+	        (select *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id not in 
+	        (
+	        SELECT p_id
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        GROUP by p_id 
+	        HAVING COUNT(p_id) > 1)
+		) 
+	) where p_id in (select distinct p_id from goods_option)
+	order by p_id desc
+	</select>
+	
+	
+	<resultMap id="goodsLikeJoinMap" type="goodsLikeJoin">
+        <collection property="goods" resultMap="goodsMap" />
+        <collection property="goodsLike" resultMap="goodsLikeMap" />
+    </resultMap>
+	
+	<resultMap type="goodsLike" id="goodsLikeMap">
+        <id column="goods_like_id" property="goodsLikeId"/>
+        <result column="p_id" property="pId"/>
+        <result column="user_id" property="userId"/>
+    </resultMap>
+	
+	<select id="selectGoodsTotalCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			goods
+	</select>
+	
+	<select id="selectOptionId" resultMap="optionList">
+		select
+			*
+		from 
+			goods_option
+		where
+			p_id = #{pId}
+	</select>
+	
+	<resultMap type="java.lang.Integer" id="optionList">
+		<result property ="optionId" column = "option_id"/>
+	</resultMap>
+	
+	<select id="selectOptionList" resultType="optionDetail">
+		select
+			*
+		from 
+			option_detail
+		where option_id = #{option}
+	</select>
+	
+	<select id="selectOneGoods" resultType="goods">
+		select
+			*
+		from
+			goods
+		where
+			p_id = #{pid}
+	</select>
+	
+	<select id="selectColorByFirstType" resultType="optionDetail">
+		select * 
+		from option_detail o
+		left join goods_option g
+		using (option_id)
+		where option_type = (
+			select option_type
+			from (
+				select * 
+				from goods_option
+				left join option_detail
+				using (option_id)
+				where goods_option.p_id = #{pid}
+				order by option_type
+			) where rownum= 1
+		) and g.p_id = #{pid}
+	</select>
+	
+	<select id="selectSizeByFirstColor" resultType="optionDetail">
+		select * 
+		from option_detail o
+		left join goods_option g
+		using (option_id)
+		where option_color = (
+		    select option_color
+		    from (
+		        select distinct option_color
+		        from goods_option
+		        left join option_detail
+		        using (option_id)
+		        where goods_option.p_id =  #{pid} 
+		        order by option_color asc
+		    ) where rownum= 1
+		) and g.p_id =  #{pid}
+	</select>
+	
+	<resultMap type="goods" id="goodsMap">
+        <id column="p_id" property="pId"/>
+        <result column="p_name" property="pName"/>
+        <result column="p_price" property="pPrice"/>
+        <result column="p_info" property="pInfo"/>
+        <result column="p_img" property="pImg"/>
+        <result column="p_category" property="pCategory"/>
+        <result column="p_enroll" property="pEnroll"/>
+        <result column="p_subcategory" property="pSubcategory"/>
+    </resultMap>
+
+    <resultMap type="goodsOption" id="goodsOptionMap">
+        <id column="p_id" property="pId"/>
+        <result column="option_id" property="optionId"/>
+    </resultMap>
+
+    <resultMap type="optionDetail" id="optionDetailMap">
+        <id column="option_id" property="optionId"/>
+        <result column="option_type" property="optionType"/>
+        <result column="option_color" property="optionColor"/>
+        <result column="option_size" property="optionSize"/>
+        <result column="option_stock" property="optionStock"/>
+        <result column="option_img" property="optionImg"/>
+        <result column="option_rgb" property="optionRgb"/>
+    </resultMap>
+
+    <resultMap type="goodsJoin" id="goodsJoinMap">
+        <collection property="goods" resultMap="goodsMap" />
+        <collection property="goodsOption" resultMap="goodsOptionMap" />
+        <collection property="optionDetail" resultMap="optionDetailMap" />
+    </resultMap>
+	
+	<select id="selectColorByType" resultType="optionDetail">
+		select * 
+		from option_detail
+		left join goods_option
+		using (option_id)
+		where p_id = #{goodsId}
+		and option_type = #{optionType}
+	</select>
+	
+	<select id="selectOneGoodsDetail" resultMap="goodsJoinMap">
+		select
+			*
+		from
+			goods_option o
+		left join goods g
+			on o.p_id = g.p_id
+		left join option_detail d
+			on o.option_id = d.option_id
+		where 
+			g.p_id = #{pId}
+	</select>
+	
+	<select id="selectSizeByColor" resultType="optionDetail">
+		select * 
+		from option_detail
+		left join goods_option
+		using (option_id)
+		where p_id = #{goodsId}
+		and option_color = #{optionColor}
+	</select>
+	
+	<select id="selectOneOptionDetail" resultType="optionDetail">
+		select * 
+		from option_detail
+		left join goods_option
+		using (option_id)
+		<where>
+			<if test="goodsId != null and goodsId != ''">
+				p_id = #{goodsId}
+			</if>
+			
+			<if test="optionType != null and optionType != ''">
+				and option_type = #{optionType}
+			</if>
+			
+			<if test="optionColor != null and optionColor != ''">
+				and option_color = #{optionColor}
+			</if>
+			
+			<if test="optionSize != null and optionSize != ''">
+				and option_size = #{optionSize}
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectOneOptionId" resultType="_int">
+		select * 
+		from option_detail
+		left join goods_option
+		using (option_id)
+		<where>
+			<if test="goodsId != null and goodsId != ''">
+				p_id = #{goodsId}
+			</if>
+			
+			<if test="optionType != null and optionType != ''">
+				and option_type = #{optionType}
+			</if>
+			
+			<if test="optionColor != null and optionColor != ''">
+				and option_color = #{optionColor}
+			</if>
+			
+			<if test="optionSize != null and optionSize != ''">
+				and option_size = #{optionSize}
+			</if>
+		</where>
+	
+	</select>
+	
+	<insert id="insertCart">
+		insert into
+			goods_cart(cart_id, p_id, option_id, member_id, cart_quantity)
+		values(
+			seq_goods_cart_id.nextval,
+			#{pId},
+			#{optionId},
+			#{memberId},
+			#{cartQty}
+		)
+	</insert>
+	
+	<select id="selectOneCart" resultType="goodsCart">
+		select
+			*
+		from
+			goods_cart
+		where
+			p_id = #{pId}
+			and option_id = #{optionId}
+			and member_id = #{memberId}
+
+	</select>
+	
+	<update id="updateCartQty">
+		update
+			goods_cart
+		set
+			cart_quantity = cart_quantity + #{cartQty}
+		where
+			cart_id = #{cartId}
+	
+	</update>
+	
+	<!-- <select id="selectGoodsCartList" resultType="goodsCart">
+		select *
+		from goods_cart
+		where member_id = #{memeberId}
+		order by cart_id desc
+	</select> -->
+	
+	<select id="selectGoodsCartList" resultMap="cartJoinMap">
+		select * 
+		from goods_cart 
+		left join goods
+		using (p_id)
+		left join option_detail
+		using (option_id)
+		where member_id = #{memeberId}
+		order by cart_id desc
+	</select>
+	
+	<resultMap id="cartJoinMap" type="cartJoin">
+        <collection property="goods" resultMap="goodsMap" />
+        <collection property="goodsCart" resultMap="goodsCartMap" />
+        <collection property="optionDetail" resultMap="optionDetailMap" />
+    </resultMap>
+	
+	<resultMap type="goodsCart" id="goodsCartMap">
+        <id column="cart_id" property="cartId"/>
+        <result column="p_id" property="pId"/>
+        <result column="option_id" property="optionId"/>
+        <result column="member_id" property="memberId"/>
+        <result column="cart_quantity" property="cartQuantity"/>
+    </resultMap>
+	
+	<delete id="deleteCart">
+		delete from goods_cart
+		where cart_id = #{cartId}
+	
+	</delete>
+	
+	<select id="selectGoodsCartQtyModal" resultMap="cartJoinMap">
+		select * 
+		from goods_cart 
+		left join goods
+		using (p_id)
+		left join option_detail
+		using (option_id)
+		where cart_id = #{id}
+	</select>
+	
+	
+	<update id="updateCart">
+		update
+			goods_cart
+		set
+			cart_quantity = #{qty}
+		where
+			cart_id = #{cartId}
+	
+	</update>
+	
+	
+	<select id="selectOneGoodsLike" resultType="goodsLike">
+		select * 
+		from goods_like 
+		where p_id = #{pId}
+		and user_id = #{userId}
+	</select>
+	
+	
+	<insert id="insertGoodsLike">
+		insert into
+			goods_like
+		values(
+			default,
+			#{pId},
+			#{userId}
+		)
+	</insert>
+	
+	<delete id="deleteGoodsLike">
+		delete from goods_like
+		where user_id = #{userId}
+		and p_id = #{pId}
+	
+	</delete>
+	
+	<insert id="insertGoodsOrder">
+		insert into
+			goods_order
+		values(
+			default,
+			#{memberId},
+			#{payPrice},
+			default
+		)
+	</insert>
+	
+	<!-- <select id="selectOneOrderNo" resultType="string">
+		select *
+		from goods_order
+		where member_id = #{memberId}
+		and total_price = #{totalPrice}
+	</select> -->
+	
+	<select id="selectOneOrderNo" resultType="string">
+		select * from (
+			select order_no
+			from goods_order
+			where member_id = #{memberId}
+			and total_price = #{payPrice}
+			order by order_date desc
+		) where rownum = 1
+	</select>
+	
+	
+	<insert id="insertOrderDetail">
+		insert into 
+			order_detail
+		select 
+			seq_order_detail_no.nextval as order_detail_no, 
+			#{orderNo} as order_no, 
+			e.p_id, 
+			e.option_id, 
+			e.cart_quantity as quantity,
+			'상품준비중' as status
+		from 
+			goods_cart e 
+		where 
+			member_id = #{memberId}
+	</insert>
+	
+	<insert id="insertPayment">
+		insert into payment
+		values (
+			default,
+			#{orderNo},
+			#{memberId},
+			#{receiver},
+			#{receiverPhone},
+			#{postCode},
+			#{address},
+			#{detailAddress},
+			#{orderComment},
+			#{payPrice},
+			#{usedPoints},
+			#{cardName},
+			#{cardNumber},
+			default
+		)
+	</insert>
+	
+	<update id="updateMemberAddress">
+		update
+			member
+		set
+			post_code = #{postCode},
+			address = #{address},
+			detail_address = #{detailAddress}
+		where
+			id = #{memberId}
+	
+	</update>
+	
+	
+	<update id="updateMemberPoint">
+		update
+			member
+		set
+			point = 0
+		where
+			id = #{memberId}
+	
+	</update>
+	
+	<delete id="deleteCartList">
+		delete from goods_cart
+		where member_id = #{memberId}
+	
+	</delete>
+	
+	<insert id="insertPointHistoryByPayment">
+		insert into point_history
+		values (
+			seq_history_no.nextval,
+			#{memberId},
+			#{reason},
+			#{change},
+			#{point},
+			default
+		)
+	</insert>
+	
+	<select id="selectOnePayment" resultType="payment">
+		select * from (
+			select * from payment 
+			where member_id = #{id}
+			order by payment_date desc) 
+		where rownum = 1
+	</select>
+	
+	<select id="selectPaymentByPaymentNo" resultType="payment">
+		select * from payment 
+		where payment_no = #{no}
+	</select>
+	
+	<select id="selectOneGoodsOrder" resultType="goodsOrder">
+		select * from (
+			select * from goods_order 
+			where member_id = #{id}
+			order by order_date desc) 
+		where rownum = 1
+	</select>
+	
+	<select id="selectOrderList" resultMap="orderJoinMap">
+		select *
+		from order_detail r
+		left join goods g
+		using (p_id)
+		left join option_detail p
+		using (option_id)
+		left join goods_order o
+		using (order_no)
+		where o.member_id = #{memberId}
+		order by order_detail_no desc
+	</select>
+	
+	<resultMap id="orderJoinMap" type="orderJoin">
+        <collection property="goodsOrder" resultMap="goodsOrderMap" />
+        <collection property="orderDetail" resultMap="orderDetailMap" />
+        <collection property="goods" resultMap="goodsMap" />
+        <collection property="optionDetail" resultMap="optionDetailMap" />
+    </resultMap>
+	
+	<resultMap type="orderDetail" id="orderDetailMap">
+        <id column="order_detail_no" property="orderDetailNo"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="p_id" property="pId"/>
+        <result column="option_id" property="optionId"/>
+        <result column="quantity" property="quantity"/>
+        <result column="status" property="status"/>
+    </resultMap>
+    
+    <resultMap type="goodsOrder" id="goodsOrderMap">
+        <id column="order_no" property="orderNo"/>
+        <result column="member_id" property="memberId"/>
+        <result column="total_price" property="totalPrice"/>
+        <result column="order_date" property="orderDate"/>
+    </resultMap>
+	
+	<resultMap type="payment" id="paymentMap">
+        <id column="payment_no" property="paymentNo"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="member_id" property="memberId"/>
+        <result column="receiver" property="receiver"/>
+        <result column="phone" property="phone"/>
+        <result column="post_code" property="postCode"/>
+        <result column="address" property="address"/>
+        <result column="detail_address" property="detailAddress"/>
+        <result column="order_comment" property="orderComment"/>
+        <result column="total_price" property="totalPrice"/>
+        <result column="used_points" property="usedPoints"/>
+        <result column="payment_date" property="paymentDate"/>
+        <result column="card_name" property="cardName"/>
+        <result column="card_number" property="cardNumber"/>
+    </resultMap>
+	
+	<select id="selectOrderNo" resultType="_int">
+		select order_no
+		from order_detail
+		left join goods_order
+		using (order_no)
+		where order_detail_no = #{orderDetailNo}
+	</select>
+	
+	<select id="selectFirstOrderDetailNo" resultType="_int">
+		select order_detail_no from (
+		select * 
+		from goods_order
+		left join order_detail
+		using (order_no)
+		where order_no = #{orderNo}
+		order by order_detail_no asc
+		) where rownum = 1
+	</select>
+	
+	<select id="selectOneOrderDetailJoin" resultMap="orderDetailJoinMap">
+		select * 
+		from goods_order
+		left join order_detail
+		using (order_no)
+		left join payment
+		using (order_no)
+		left join goods
+		using (p_id)
+		left join option_detail
+		using (option_id)
+		where order_detail_no = #{orderDetailNo}
+	</select>
+	
+	<resultMap id="orderDetailJoinMap" type="OrderDetailJoin">
+        <collection property="goodsOrder" resultMap="goodsOrderMap" />
+        <collection property="orderDetail" resultMap="orderDetailMap" />
+        <collection property="payment" resultMap="paymentMap" />
+        <collection property="goods" resultMap="goodsMap" />
+        <collection property="optionDetail" resultMap="optionDetailMap" />
+    </resultMap>
+	
+	
+	<select id="selectGoodsLikeItems" resultMap="goodsLikeJoinMap">
+		select * 
+		from goods_like 
+		left join goods
+		using (p_id)
+		where user_id = #{loginId}
+	</select>
+	
+	<select id="selectAllMemberCount" resultType="_int">
+		select count(*) from member
+	
+	</select>
+	
+	<select id="selectOrderMemberCount" resultType="_int">
+		select count(distinct member_id) from goods_order
+	
+	</select>
+	
+	<select id="selectAgeNumber" resultType="string">
+		select 
+		     extract(year from sysdate)-extract(year from m.birthday) age,
+		     m.id
+		from 
+		    member m 
+		inner join 
+		    goods_order g
+		on 
+		    m.id = g.member_id
+		group by
+		    (extract(year from sysdate)-extract(year from m.birthday)), id
+		order by
+		    age asc
+	</select>
+	
+	<select id="selectGoodsListBySortType" resultMap="goodsLikeJoinMap">
+		select * from (
+	        (
+	        select * from (SELECT *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id in
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            GROUP by p_id 
+	            HAVING COUNT(p_id) > 1
+	            )
+	        and user_id != #{loginId}
+	        and p_id not in 
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            where p_id in
+	                (
+	                SELECT p_id
+	                from goods
+	                left join goods_like
+	                using (p_id)
+	                GROUP by p_id 
+	                HAVING COUNT(p_id) > 1
+	                )
+	            and user_id = #{loginId}
+	            )
+	        )
+	        where rowid in (select max(rowid) from (SELECT *
+	        from goods
+	        left join goods_like
+	        using (p_id)
+	        where p_id in
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            GROUP by p_id 
+	            HAVING COUNT(p_id) > 1
+	            )
+	        and user_id != #{loginId}
+	        and p_id not in 
+	            (
+	            SELECT p_id
+	            from goods
+	            left join goods_like
+	            using (p_id)
+	            where p_id in
+	                (
+	                SELECT p_id
+	                from goods
+	                left join goods_like
+	                using (p_id)
+	                GROUP by p_id 
+	                HAVING COUNT(p_id) > 1
+	                )
+	            and user_id = #{loginId}
+	            )) group by p_id)
+	        )
+			union
+		        (SELECT *
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where p_id in
+		        (
+		        SELECT p_id
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        GROUP by p_id 
+		        HAVING COUNT(p_id) > 1
+		        )
+		        and user_id = #{loginId}
+		        )
+			union
+		        (select *
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        where p_id not in 
+		        (
+		        SELECT p_id
+		        from goods
+		        left join goods_like
+		        using (p_id)
+		        GROUP by p_id 
+		        HAVING COUNT(p_id) > 1)
+			) 
+		) where p_id in (select distinct p_id from goods_option)
+		
+		<if test="sortType == '낮은가격순'">
+			order by p_price asc
+		</if>
+		
+		<if test="sortType == '높은가격순'">
+			order by p_price desc
+		</if>
+		
+		<if test="sortType == '최신등록순'">
+			order by p_enroll desc
+		</if>
+		
+		<if test="sortType == '상품명순'">
+			order by p_name asc
+		</if>
+	</select>
+	
+	
+	<select id="selectOrderDetailList" resultType="orderDetail">
+		select * 
+		from goods_order
+		left join order_detail
+		using (order_no)
+		where order_no = #{orderNo}
+	</select>
+	
+	<update id="updateGoodsStock">
+		update
+			option_detail
+		set
+			option_stock = option_stock-1
+		where
+			option_id = #{optionId}
+	
+	</update>
+
+	<update id="updateOrderDetailStatus">
+		update order_detail 
+		set status = '구매확정' 
+		where order_detail_no = #{orderDetailNo}
+	
+	</update>
+	
+</mapper>

@@ -1,0 +1,1837 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="admin">
+
+<select id="selectMemberList" resultMap="memberMap">
+	select
+	    *
+	from
+	    member m left join authorities a
+	        on m.id = a.member_id
+	order by
+		reg_date desc
+</select>
+
+	<resultMap type="member" id="memberMap">
+		<id column="id" property="id"/>
+		<result column="password" property="password" />
+		<result column="name" property="name" />
+		<result column="phone" property="phone" />
+		<result column="gender" property="gender" />
+		<result column="email" property="email" />
+		<result column="birthday" property="birthday" />
+		<result column="address" property="address" />
+		<result column="nickname" property="nickname" />
+		<result column="reg_date" property="regDate" />
+		<result column="point" property="point" />
+		<result column="enabled" property="enabled" />
+		<result column="image" property="image" />
+		<collection 
+			property="authorities" 
+			ofType="org.springframework.security.core.authority.SimpleGrantedAuthority">
+			<constructor>	
+				<arg column="authority" javaType="string"/>
+			</constructor>		
+		</collection>
+ 	</resultMap>
+ 	
+	<select id="selectMemberTotalCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			member
+	</select>
+	
+<select id="selectGoodsList" resultType="goods">
+	select
+		*
+	from
+		goods
+	order by
+		p_enroll desc
+</select>
+
+	<insert id="insertGoods" parameterType="goods">
+		insert into
+			goods
+		values(
+			seq_goods_id.nextval,
+			#{pName},
+			#{pPrice},
+			#{pInfo},
+			#{pImg},
+			#{pCategory},
+			default,
+			#{pSubcategory}
+		)
+		
+		<selectKey keyProperty="pId" resultType="_int" order="AFTER">
+			select 
+				seq_goods_id.currval
+			from 
+				dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insertAttachment">
+		insert into
+			attachment(attach_no, notice_no, original_filename, renamed_filename)
+		values(
+			seq_attachment_no.nextval,
+			#{noticeNo},
+			#{originalFilename},
+			#{renamedFilename}
+		)		
+	</insert>
+
+	<insert id="insertGoodsAttachment">
+		insert into
+			attachment(attach_no, original_filename, renamed_filename)
+		values(
+			seq_attachment_no.nextval,
+			#{originalFilename},
+			#{renamedFilename}
+		)		
+	</insert>
+	
+	<delete id="deleteGoods">
+		delete from
+			goods
+		where
+			p_id = #{pId}
+	</delete>
+	
+	<select id="selectOneGoods" resultType="goods">
+		select
+			*
+		from
+			goods
+		where
+			p_id = #{pId}
+	</select>
+	
+	<update id="updateGoods">
+		update
+			goods
+		set 
+			p_name = #{pName}, p_price = #{pPrice}, p_info = #{pInfo}, p_img = #{pImg}, p_category = #{pCategory}
+		where
+			p_id = #{pId}
+	</update>
+	
+	<select id="selectOneMember" resultType="member">
+		select
+			*
+		from
+			member
+		where
+			id = #{id}
+	</select>
+	
+	<select id="selectMemberPointHistoryList" resultType="pointHistory">
+		select
+			*
+		from
+			point_history
+		where
+			member_id = #{id}
+		order by 
+			reg_date desc
+	</select>
+	
+	<update id="updateMember">
+		update
+			member
+		set
+			nickname=#{nickname}, phone=#{phone}, email=#{email}, address=#{address}
+		where
+			id = #{id}
+	</update>
+	
+	<select id="searchMember" resultType="member">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					m.* 
+				from 
+					member m)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('id')">
+				where 
+					id like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('name')">
+				where 
+					name like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchMemberCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('id')">
+			select 
+				count(*) 
+			from 
+				member 
+			where 
+				id like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('name')">
+			select 
+				count(*) 
+			from 
+				member 
+			where 
+				name like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="searchGoods" resultType="goods">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by p_enroll desc) rnum, 
+					g.* 
+				from 
+					goods g)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('pId')">
+				where 
+					p_id like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('pName')">
+				where 
+					p_name like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+	
+	<select id="searchGoodsCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('pId')">
+			select 
+				count(*) 
+			from 
+				goods
+			where 
+				p_id like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('pName')">
+			select 
+				count(*) 
+			from 
+				goods 
+			where 
+				p_name like #{searchKeyword}
+		</if>
+	</select>
+	
+	<insert id="insertPointHistory">
+		insert into
+			point_history
+		values (seq_history_no.nextval, #{id}, #{reason}, #{change}, #{point}, default)
+	</insert>
+	
+	<update id="updateMemberPoint" parameterType="hashmap">
+		update 
+			member
+		set
+			point = #{point}
+		where
+			id = #{id}
+	</update>
+	
+	<select id="searchMovieList" resultType="movie">
+		select
+			*
+		from
+			movie
+	</select>
+	
+	<select id="selectOneMovie" resultType="movie">
+		select
+			*
+		from
+			movie
+		where
+			movie_id = #{movieId}
+	</select>
+	
+	<select id="selectTheaterList" resultType="theater">
+		select
+			*
+		from
+			theater
+	</select>
+	
+	<select id="selectOneTheater" resultMap="movieJoinMap">
+		select distinct
+			s.seat_no, s.is_booked
+		from
+			movie_schedule c
+			left join theater t
+			on c.theater_id = t.theater_id
+			left join seat s
+			on c.movie_schedule_id = s.movie_schedule_id
+		where 
+			t.theater_id = #{theaterId} and not s.seat_no is null and s.is_booked = 0
+		order by s.seat_no asc
+	</select>
+	
+	<resultMap type="movie" id="movieMap">
+		<id column="movie_id" property="movieId"/>
+		<result column="title_kor" property="titleKor"/>
+		<result column="title_eng" property="titleEng"/>
+		<result column="description" property="description"/>
+		<result column="opening_date" property="openingDate"/>
+		<result column="director" property="director"/>
+		<result column="actors" property="actors"/>
+		<result column="genre" property="genre"/>
+		<result column="running_time" property="runningTime"/>
+		<result column="age_limit" property="ageLimit"/>
+		<result column="image" property="image"/>
+	</resultMap>
+
+	<resultMap type="movieReservation" id="movieReservationMap">
+		<id column="movie_reservation_id" property="movieReservationId"/>
+		<result column="movie_schedule_id" property="movieScheduleId"/>
+		<result column="member_id" property="memberId"/>
+		<result column="movie_id" property="movieId"/>
+		<result column="title_kor" property="titleKor"/>
+		<result column="selected_seat" property="selectedSeat"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="theater_id" property="theaterId"/>
+		<result column="start_date" property="startDate"/>
+		<result column="start_time" property="startTime"/>
+		<result column="amount" property="amount"/>
+		<result column="theater_id" property="theaterId"/>
+		<result column="count" property="count"/>
+	</resultMap>
+
+	<resultMap type="movieSchedule" id="movieScheduleMap">
+		<id column="movie_schedule_id" property="movieScheduleId"/>
+		<result column="theater_id" property="theaterId"/>
+		<result column="movie_id" property="movieId"/>
+		<result column="start_date" property="startDate"/>
+		<result column="start_time" property="startTime"/>
+	</resultMap>
+
+	<resultMap type="theater" id="theaterMap">
+		<id column="theater_id" property="theaterId"/>
+		<result column="max_seat" property="maxSeat"/>
+	</resultMap>
+	
+	<resultMap type="seat" id="seatMap">
+		<id column="seat_no" property="seatNo"/>
+		<result column="movie_schedule_id" property="movieScheduleId"/>
+		<result column="is_booked" property="isBooked"/>
+	</resultMap>
+	
+	<resultMap type="movieJoin" id="movieJoinMap">
+		<collection property="movie" resultMap="movieMap" />
+		<collection property="movieSchedule" resultMap="movieScheduleMap" />
+		<collection property="movieReservation" resultMap="movieReservationMap" />
+		<collection property="theater" resultMap="theaterMap" />
+		<collection property="seat" resultMap="seatMap" />
+	</resultMap>
+	
+	<select id="adminOneMovieSchedule" resultMap="movieJoinMap">
+		select
+		   *
+		from
+		    movie m
+		left join movie_schedule s
+		on m.movie_id = s.movie_id
+		where 
+			m.movie_id = #{movieId}
+	</select>
+	
+	<select id="adminOneMovieScheduleDate" resultMap="movieJoinMap">
+		select
+		   *
+		from
+		    movie m
+		left join movie_schedule s
+		on m.movie_id = s.movie_id
+		where 
+			s.start_date = #{startDate} and m.movie_id = #{movieId}
+	</select>
+	
+	<select id="adminSelectNoticeList" resultType="notice">
+		select 
+        	n.*,
+        	(select count(*) from attachment where attach_no = n.notice_no) attach_count
+		from 
+			notice_board n
+		order by 
+			notice_no desc
+	</select>
+	
+	<select id="countTotalNoticeContent" resultType="_int">
+		select 
+			count(*)
+		from 
+			notice_board
+	</select>
+	
+	<insert id="insertNotice" parameterType="notice">
+		insert into 
+			notice_board(notice_no, notice_title, notice_content, member_id)
+		values (
+			seq_notice_no.nextval,
+			#{noticeTitle},
+			#{noticeContent},
+			#{memberId}
+		)
+		
+		<selectKey keyProperty="noticeNo" resultType="_int" order="AFTER">
+			select 
+				seq_notice_no.currval
+			from 
+				dual
+		</selectKey>
+	</insert>
+	
+	<select id="selectOneNoticeCollection" resultMap="noticeCollectionMap">
+		select
+			b.*,
+			a.*,
+			a.attach_no attach_no
+		from 
+		notice_board b left join attachment a
+				on b.notice_no = a.notice_no
+		where 
+			b.notice_no = #{no}
+		order by 
+			b.notice_no desc
+	</select>
+	
+	<resultMap type="notice" id="noticeCollectionMap">
+		<id column="notice_no" property="noticeNo"/>
+		<result column="notice_title" property="noticeTitle"/>
+		<result column="notice_content" property="noticeContent"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="read_count" property="readCount"/>
+		
+		<collection property="attachments" ofType="attachment">
+			<id column="attach_no" property="attachNo"/>
+			<result column="notice_no" property="noticeNo"/>
+			<result column="original_filename" property="originalFilename"/>
+			<result column="renamed_filename" property="renamedFilename"/>
+			<result column="reg_date" property="regDate"/>
+		</collection>
+		
+	</resultMap>
+	
+	<select id="selectOneAttachment" resultType="attachment">
+		select 
+			*
+		from 
+			attachment
+		where 
+			attach_no = #{no}
+	</select>
+	
+	<select id="selectNoticeOneloginMember" resultType="string">
+		select 
+			authority
+		from 
+			notice_board a left join authorities b
+            on a.member_id = b.member_id
+        where 
+        	a.notice_no = #{noticeNo}
+	</select>
+	
+	<select id="selectOneGoodsDetail" resultMap="goodsJoinMap">
+		select
+			*
+		from
+			goods_option o
+		left join goods g
+		on o.p_id = g.p_id
+		left join option_detail d
+		on o.option_id = d.option_id
+		where 
+			g.p_id = #{pId}
+	</select>
+	
+	<resultMap type="goods" id="goodsMap">
+        <id column="p_id" property="pId"/>
+        <result column="p_name" property="pName"/>
+        <result column="p_price" property="pPrice"/>
+        <result column="p_info" property="pInfo"/>
+        <result column="p_img" property="pImg"/>
+        <result column="p_category" property="pCategory"/>
+        <result column="p_enroll" property="pEnroll"/>
+        <result column="p_subcategory" property="pSubcategory"/>
+    </resultMap>
+
+	<resultMap type="goodsOption" id="goodsOptionMap">
+		<id column="p_id" property="pId"/>
+		<result column="option_id" property="optionId"/>
+	</resultMap>
+	
+	<resultMap type="optionDetail" id="optionDetailMap">
+		<id column="option_id" property="optionId"/>
+		<result column="option_type" property="optionType"/>
+		<result column="option_color" property="optionColor"/>
+		<result column="option_size" property="optionSize"/>
+		<result column="option_stock" property="optionStock"/>
+		<result column="option_img" property="optionImg"/>
+		<result column="option_rgb" property="optionRgb"/>
+	</resultMap>
+	
+	<resultMap type="goodsOrder" id="goodsOrderMap">
+		<id column="order_no" property="orderNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="total_price" property="totalPrice"/>
+		<result column="order_date" property="orderDate"/>
+	</resultMap>
+
+	<resultMap type="orderDetail" id="orderDetailMap">
+		<id column="order_detail_no" property="orderDetailNo"/>
+		<result column="order_no" property="orderNo"/>
+		<result column="p_id" property="pId"/>
+		<result column="option_id" property="optionId"/>
+		<result column="quantity" property="quantity"/>
+		<result column="status" property="status"/>
+	</resultMap>
+	
+	<resultMap type="payment" id="paymentMap">
+		<id column="payment_no" property="paymentNo"/>
+		<result column="order_no" property="orderNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="receiver" property="receiver"/>
+		<result column="phone" property="phone"/>
+		<result column="post_code" property="postCode"/>
+		<result column="address" property="address"/>
+		<result column="detail_address" property="detailAddress"/>
+		<result column="order_comment" property="orderComment"/>
+		<result column="total_price" property="totalPrice"/>
+		<result column="used_points" property="usedPoints"/>
+		<result column="payment_date" property="paymentDate"/>
+		<result column="card_name" property="cardName"/>
+		<result column="card_number" property="cardNumber"/>
+	</resultMap>
+	
+	<resultMap type="goodsJoin" id="goodsJoinMap">
+		<collection property="goods" resultMap="goodsMap" />
+		<collection property="goodsOption" resultMap="goodsOptionMap" />
+		<collection property="optionDetail" resultMap="optionDetailMap" />
+	</resultMap>
+	
+	<select id="selectOneGoodsOption" resultType="optionDetail">
+		select
+			*
+		from
+			option_detail
+		where
+			option_id = #{optionId}
+	</select>
+	
+	<update id="updateGoodsOption">
+		update
+			option_detail
+		set
+			option_type = #{optionType}, option_color = #{optionColor}, option_size = #{optionSize}, option_stock = #{optionStock}, option_img = #{optionImg}, option_rgb = #{optionRgb}
+		where option_id = #{optionId}
+	</update>
+	
+	<insert id="insertOptionDetail">
+		insert into
+			option_detail
+		values (#{optionId}, #{optionDetail.optionType}, #{optionDetail.optionColor}, #{optionDetail.optionSize}, #{optionDetail.optionStock}, #{optionDetail.optionImg}, #{optionDetail.optionRgb})
+	</insert>
+	
+	<select id="selectOptionId" resultType="int">
+		select 
+			seq_option_detail_id.nextval 
+		from 
+			dual
+	</select>
+
+	<insert id="insertGoodsOption">
+			insert into 
+				goods_option
+			values(#{pId}, #{optionId})
+	</insert>
+	
+	<delete id="deleteGoodsOption">
+		delete from
+			option_detail
+		where
+			option_id = #{optionId}
+	</delete>
+	
+	<update id="updateNotice">
+		update 
+			notice_board
+		set
+			notice_title = #{noticeTitle},
+			notice_content = #{noticeContent}
+		where 
+			notice_no = #{noticeNo}
+	</update>
+	
+	<delete id="deleteNoticeAttachment">
+		delete from 
+			attachment
+		where 
+			attach_no = #{attachNo}
+	</delete>
+	
+	<delete id="deleteNotice">
+		delete from 
+			notice_board
+		where 
+			notice_no = #{noticeNo}
+	</delete>
+	
+	<select id="selectAttachmentByNoticeNo" resultType="attachment">
+		select 
+			*
+		from 
+			attachment 
+		where 
+			notice_no = #{noticeNo}
+	</select>
+	
+	<select id="adminManageRegisterAweekAgoCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			member 
+		where 
+			<![CDATA[to_char(reg_date, 'YYYYMMDD') >= to_char(sysdate-7,'YYYYMMDD')]]>
+	</select>
+	
+	<select id="adminManageTodayScreeningCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			movie_schedule 
+		where 
+			<![CDATA[start_date = to_char(sysdate, 'YYYY-MM-DD')]]>
+	</select>
+	
+	<select id="adminManageRecentTenReviewList" resultMap="reviewMap"> 
+		select
+			*
+		from
+			(select
+				m.image, r.member_id, r.reg_date, r.review_title
+			from
+				member m 
+			left join review_board r
+			on m.id = r.member_id
+			where 
+				r.reg_date is not null 
+			order by 
+				r.reg_date desc
+			)
+		<![CDATA[where rownum <= 10 and to_char(reg_date, 'YYYYMMDD') >= to_char(sysdate-7,'YYYYMMDD')]]>
+	</select>
+			
+	
+	<resultMap type="review" id="reviewMap">
+		<id column="review_no" property="reviewNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="review_title" property="reviewTitle"/>
+		<result column="review_content" property="reviewContent"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="read_count" property="readCount"/>
+		<result column="recommend" property="recommend"/>
+		<result column="attach_count" property="attachCount"/>
+		<result column="rc_count" property="reviewCommentCount"/>
+		<association property="member" javaType="member">
+			<id column="id" property="id"/>
+			<result column="nickname" property="nickname"/>
+			<result column="image" property="image"/>
+		</association>	
+	</resultMap>
+	
+	
+	<select id="adminSelectQuestionList" resultType="question">
+		select
+			b.*,
+			(select count(*) from attachment where question_no = b.question_no) attach_count
+		from 
+			question_board b left join member a
+                    on b.member_id = a.id
+		order by 
+			question_no desc
+	</select>
+	
+	<select id="countTotalQuestionContent" resultType="_int">
+		select 
+			count(*)
+		from 
+			question_board a left join member b
+		        on a.member_id = b.id
+	</select>
+	
+	<select id="selectQuestionCollection" resultMap="questionCollectionMap">
+		select 
+			b.*,
+			a.*,
+			a.attach_no attach_no
+		from 
+			question_board b left join attachment a
+				on b.question_no = a.question_no
+		where 
+			b.question_no = #{questionNo}
+		order by 
+			b.question_no desc
+	</select>
+	
+	<resultMap type="question" id="questionCollectionMap">
+		<id column="question_no" property="questionNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="question_title" property="questionTitle"/>
+		<result column="question_content" property="questionContent"/>
+		<result column="reg_date" property="regDate"/>
+		
+		<collection property="attachments" ofType="attachment">
+			<id column="attach_no" property="attachNo"/>
+			<result column="question_no" property="questionNo"/>
+			<result column="original_filename" property="originalFilename"/>
+			<result column="renamed_filename" property="renamedFilename"/>
+			<result column="reg_date" property="regDate"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectQuestionComment" resultType="QuestionComment">
+		select 
+			*
+		from 
+			question_comment
+		where 
+			question_no = #{questionNo}
+	</select>
+	
+	<insert id="insertQuestionComment">
+		insert into 
+			question_comment(no, question_no, writer, content, reg_date)
+		values (
+			default,
+			#{questionNo},
+			#{writer},
+			#{content},
+			default
+		)
+	</insert>
+	
+	<update id="updateQuestionAnswer">
+		update 
+			question_board
+		set 
+			answer = 'Y'
+		where 
+			question_no = #{questionNo}
+	</update>
+	
+	<delete id="deleteQuestionComment">
+		delete from 
+			question_comment
+		where 
+			no = #{commentNo}
+	</delete>
+	
+	<update id="updateQuestionAnswerToN">
+		update 
+			question_board
+		set
+			answer = default
+		where 
+			question_no = #{questionNo}
+	</update>
+	
+	<select id="adminManageTodayReviewCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			review_board 
+		where 
+			to_date(reg_date, 'YYYY-MM-DD') = to_date(sysdate,'YYYY-MM-DD')
+	</select>
+
+	<select id="adminManageTodayQuestionCount" resultType="_int">
+		select 
+			count(*) 
+		from 
+			question_board 
+		where 
+			to_date(reg_date, 'YYYY-MM-DD') = to_date(sysdate,'YYYY-MM-DD')
+	</select>
+	
+	<select id="searchQuestion" resultType="question">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					q.* 
+				from 
+					question_board q)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('questionNo')">
+				where 
+					question_no like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('questionTitle')">
+				where 
+					question_title like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+				where 
+					member_id like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchQuestionCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('questionNo')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				question_no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('questionTitle')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				question_title like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				member_id like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="searchNotice" resultType="notice">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					n.* 
+				from 
+					notice_board n)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('noticeNo')">
+				where 
+					notice_no like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('noticeTitle')">
+				where 
+					notice_title like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchNoticeCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('noticeNo')">
+			select 
+				count(*) 
+			from 
+				notice_board
+			where 
+				notice_no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('noticeTitle')">
+			select 
+				count(*) 
+			from 
+				notice_board
+			where 
+				notice_title like #{searchKeyword}
+		</if>
+	</select>
+	
+	<insert id="insertRouletteEvent">
+		insert into
+			roulette_event
+		values (#{id}, #{oldChange}, default)
+	</insert>
+	
+	<select id="selectRouletteEvent" resultType="rouletteEvent">
+		select
+			*
+		from
+			roulette_event
+		where
+			member_id = #{memberId}
+	</select>
+	
+	<select id="selectRouletteEventParticipateCnt" resultType="_int"> 
+		select 
+			count(*) 
+		from 
+			roulette_event 
+		where member_id = #{id}
+	</select>
+	
+	<update id="updateRouletteEvent">
+		update 
+			roulette_event
+		set 
+			point = #{oldChange}, participate_date = default 	
+		where 
+			member_id = #{id}
+	</update>
+	
+	<select id="adminSelectNewQuestion" resultType="question">
+		select
+			b.*,
+			(select count(*) from attachment where question_no = b.question_no) attach_count
+		from 
+			question_board b left join member a
+                    on b.member_id = a.id
+        where 
+        	answer = 'N'
+		order by 
+			question_no desc
+	</select>
+	
+		<select id="countTotalNewQuestionContent" resultType="_int">
+		select 
+			count(*)
+		from 
+			question_board a left join member b
+		        on a.member_id = b.id
+		where 
+			answer = 'N'
+	</select>
+	
+		<select id="searchNewQuestion" resultType="question">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					q.* 
+				from 
+					question_board q)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('questionNo')">
+				where 
+					answer = 'N' and question_no like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('questionTitle')">
+				where 
+					answer = 'N' and question_title like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+				where 
+					answer = 'N' and member_id like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchNewQuestionCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('questionNo')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				answer = 'N' and question_no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('questionTitle')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				answer = 'N' and question_title like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+			select 
+				count(*) 
+			from 
+				question_board
+			where 
+				answer = 'N' and member_id like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="adminManageRecentTenQuestionList" resultMap="questionMap">
+		select
+			b.member_id, b.question_title, b.reg_date, a.image
+		from 
+			question_board b left join member a
+                    on b.member_id = a.id
+        where 
+        	answer = 'N'
+		order by 
+			question_no desc
+	</select>
+	
+	<resultMap type="question" id="questionMap">
+		<id column="question_no" property="questionNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="question_title" property="questionTitle"/>
+		<result column="question_content" property="questionContent"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="answer" property="answer"/>
+		<association property="member" javaType="member">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="phone" property="phone"/>
+			<result column="email" property="email"/>
+			<result column="birthday" property="birthday"/>
+			<result column="address" property="address"/>
+			<result column="nickname" property="nickname"/>
+			<result column="image" property="image"/>
+		</association>	
+	</resultMap>
+	
+	<select id="adminSelectReviewList" resultType="review">
+		select 
+        	r.*,
+        	(select count(*) from attachment where attach_no = r.review_no) attach_count
+		from 
+			review_board r
+		order by 
+			review_no desc
+	</select>
+	
+	<select id="countTotalReviewContent" resultType="_int">
+		select 
+			count(*)
+		from 
+			review_board
+	</select>
+	
+		<resultMap type="review" id="reviewCollectionMap">
+		<id column="review_no" property="reviewNo"/>
+		<result column="member_id" property="memberId"/>
+		<result column="review_title" property="reviewTitle"/>
+		<result column="review_content" property="reviewContent"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="rc_count" property="reviewCommentCount"/>
+		<result column="read_count" property="readCount"/>
+		<result column="recommend" property="recommend"/>
+		<association property="member" javaType="member">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="phone" property="phone"/>
+			<result column="email" property="email"/>
+			<result column="birthday" property="birthday"/>
+			<result column="address" property="address"/>
+			<result column="nickname" property="nickname"/>
+			<result column="image" property="image"/>
+		</association>	
+		<collection property="attachments" ofType="attachment">
+			<id column="attach_no" property="attachNo" />
+			<result column="review_no" property="reviewNo" />
+			<result column="renamed_filename" property="renamedFilename" />
+			<result column="original_filename" property="originalFilename" />
+			<result column="reg_date" property="regDate" />
+		</collection>
+	</resultMap>
+	
+	<select id="selectOneReviewCollection" resultMap="reviewCollectionMap">
+		select
+			r.*,
+			a.*,
+			a.attach_no attach_no
+		from 
+			review_board r left join attachment a
+				on r.review_no = a.review_no
+		where 
+			r.review_no = #{reviewNo}
+		order by 
+			r.review_no desc
+	</select>
+	
+	<select id="selectReviewOneloginMember" resultType="string">
+		select 
+			authority
+		from 
+			review_board r left join authorities a
+            on r.member_id = a.member_id
+        where 
+        	r.review_no = #{reviewNo}
+	</select>
+	
+	<delete id="deleteReview">
+		delete from 
+			review_board
+		where 
+			review_no = #{reviewNo}
+	</delete>
+	
+	<select id="selectAttachmentByReviewNo" resultType="attachment">
+		select 
+			*
+		from 
+			attachment 
+		where 
+			review_no = #{reviewNo}
+	</select>
+	
+	<delete id="deleteReviewLike">
+		delete from
+			review_like
+		where
+			review_no = #{reviewNo}
+	</delete>
+	
+	<delete id="deleteReviewComment">
+		delete from 
+			review_comment
+		where
+			review_no = #{reviewNo}
+	</delete>
+	
+	<select id="adminSelectSharingList" resultType="board">
+		select 
+        	t.*,
+        	(select count(*) from attachment where attach_no = t.no) attach_count
+		from 
+			ticket_sharing_board t
+		order by 
+			no desc
+	</select>
+	
+	<select id="countTotalSharingContent" resultType="_int">
+		select 
+			count(*)
+		from 
+			ticket_sharing_board
+	</select>
+	
+	<resultMap type="board" id="sharingCollectionMap">
+		<id column="no" property="no"/>
+		<result column="member_id" property="memberId"/>
+		<result column="title" property="title"/>
+		<result column="content" property="content"/>
+		<result column="reg_date" property="regDate"/>
+<!-- 		<result column="rc_count" property="reviewCommentCount"/> -->
+		<result column="read_count" property="readCount"/>
+		<result column="category" property="category"/>
+		<association property="member" javaType="member">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="phone" property="phone"/>
+			<result column="email" property="email"/>
+			<result column="birthday" property="birthday"/>
+			<result column="address" property="address"/>
+			<result column="nickname" property="nickname"/>
+			<result column="image" property="image"/>
+		</association>
+		<collection property="attachments" ofType="attachment">
+			<id column="attach_no" property="attachNo" />
+			<result column="market_no" property="marketNo" />
+			<result column="renamed_filename" property="renamedFilename" />
+			<result column="original_filename" property="originalFilename" />
+			<result column="reg_date" property="regDate" />
+		</collection>
+	</resultMap>
+	
+	<select id="selectOneSharingCollection" resultMap="sharingCollectionMap">
+		select
+			t.*,
+			a.*,
+			a.attach_no attach_no
+		from 
+			ticket_sharing_board t left join attachment a
+				on t.no = a.market_no
+		where 
+			t.no = #{no}
+		order by 
+			t.no desc
+	</select>
+	
+	<select id="selectSharingOneloginMember" resultType="string">
+		select 
+			authority
+		from 
+			ticket_sharing_board t left join authorities a
+            on t.member_id = a.member_id
+        where 
+        	t.no = #{no}
+	</select>
+	
+	<delete id="deleteSharing">
+		delete from 
+			ticket_sharing_board
+		where 
+			no = #{no}
+	</delete>
+	
+	<select id="selectAttachmentBySharingNo" resultType="attachment">
+		select 
+			*
+		from 
+			attachment 
+		where 
+			market_no = #{no}
+	</select>
+	
+	<update id="adminMemberCut">
+		update 
+			member
+		set 
+			enabled = 0
+		where
+			id = #{id}
+	</update>
+	
+	<update id="adminMemberUnblock">
+		update 
+			member
+		set 
+			enabled = 1
+		where
+			id = #{id}
+	</update>
+	
+	<select id="searchReview" resultType="review">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					r.* 
+				from 
+					review_board r)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('reviewNo')">
+				where 
+					review_no like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('reviewTitle')">
+				where 
+					review_title like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+				where 
+					member_id like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchReviewCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('reviewNo')">
+			select 
+				count(*) 
+			from 
+				review_board
+			where 
+				review_no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('reviewTitle')">
+			select 
+				count(*) 
+			from 
+				review_board
+			where 
+				review_title like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+			select 
+				count(*) 
+			from 
+				review_board
+			where 
+				member_id like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="searchSharing" resultType="board">
+			select 
+				*
+			from (
+				select 
+					row_number() over(order by reg_date desc) rnum, 
+					t.* 
+				from 
+					ticket_sharing_board t)
+			<choose>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('no')">
+				where 
+					no like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('title')">
+				where 
+					title like #{searchKeyword}
+			</when>
+			<when test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+				where 
+					member_id like #{searchKeyword}
+			</when>
+			</choose>
+	</select>
+
+	<select id="searchSharingCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('no')">
+			select 
+				count(*) 
+			from 
+				ticket_sharing_board
+			where 
+				no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('title')">
+			select 
+				count(*) 
+			from 
+				ticket_sharing_board
+			where 
+				title like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+			select 
+				count(*) 
+			from 
+				ticket_sharing_board
+			where 
+				member_id like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="adminManageRecentTenRegisterList" resultType="member">
+		select 
+			id, reg_date, image
+		from 
+			member
+		<![CDATA[
+		where 
+			rownum <= 10 and to_char(reg_date, 'YYYYMMDD') >= to_char(sysdate-7,'YYYYMMDD')
+		]]>
+		order by 
+			reg_date desc
+	</select>
+	
+	<delete id="deleteGoodsLike">
+		delete from
+			goods_like
+		where
+			p_id = #{pId}
+	</delete>
+	
+	<select id="selectOneGoodsOptionId" resultType="_int">
+		select
+			option_id
+		from
+			goods_option
+		where
+			p_id = #{pId}
+	</select>
+	
+	<select id="selectGoodsOrderList" resultMap="GoodsPaymentJoinMap">
+		select distinct
+			p.payment_date, p.payment_no, p.member_id, p.total_price, p.order_no
+		from
+            order_detail o
+		left join payment p
+		on o.order_no = p.order_no
+        where 
+        	p.payment_no is not null and not status in '주문취소'
+        order by
+        	p.payment_no desc
+	</select>
+	
+	<select id="selectGoodsOrderTotalCount" resultType="_int">
+		select distinct
+			count(*)
+		from
+            order_detail o
+		left join payment p
+		on o.order_no = p.order_no
+        where 
+        	p.payment_no is not null and not status in '주문취소'
+	</select>
+	
+	<resultMap type="member" id="memberMap2">
+		<id column="id" property="id"/>
+		<result column="password" property="password" />
+		<result column="name" property="name" />
+		<result column="phone" property="phone" />
+		<result column="gender" property="gender" />
+		<result column="email" property="email" />
+		<result column="birthday" property="birthday" />
+		<result column="address" property="address" />
+		<result column="postcode" property="postCode" />
+		<result column="detail_address" property="detailAddress" />
+		<result column="nickname" property="nickname" />
+		<result column="reg_date" property="regDate" />
+		<result column="point" property="point" />
+		<result column="enabled" property="enabled" />
+		<result column="image" property="image" />
+ 	</resultMap>
+	
+	<resultMap type="GoodsPaymentJoin" id="GoodsPaymentJoinMap">
+		<collection property="orderDetail" resultMap="orderDetailMap" />
+		<collection property="member" resultMap="memberMap2" />
+		<collection property="payment" resultMap="paymentMap" />
+	</resultMap>
+	
+	<select id="selectOnePayment" resultMap="GoodsPaymentJoinMap">
+		select
+			*
+		from
+			payment p
+		left join member m
+		on p.member_id = m.id
+		where 
+			m.id = #{memberId} and order_no = #{orderNo}
+	</select>
+	
+	<resultMap type="GoodsOrderDetailJoin" id="goodsOrderDetailJoinMap">
+		<collection property="goods" resultMap="goodsMap" />
+		<collection property="optionDetail" resultMap="optionDetailMap" />
+		<collection property="orderDetail" resultMap="orderDetailMap" />
+	</resultMap>
+	
+	<select id="selectOneGoodsOrderDetail" resultMap="goodsOrderDetailJoinMap">
+		select
+			*
+		from
+			(select
+			*
+			from
+			order_detail o
+			left join goods g
+			on o.p_id = g.p_id
+			left join option_detail d
+			on o.option_id = d.option_id
+			) o
+		where 
+			o.order_no = #{orderNo}
+	</select>
+	
+	<select id="selectOneGoodsOrderMember" resultType="string">
+		select
+			member_id
+		from
+			goods_order
+		where
+			order_no = #{orderNo}
+	</select>
+	
+	<select id="selectRecentTenGoodsList" resultMap="GoodsPaymentJoinMap"> 
+		select distinct
+			payment_no, member_id, total_price, payment_date
+		from
+            (select
+            *
+            from
+            order_detail o
+		left join payment p
+		on o.order_no = p.order_no
+		order by 
+		p.payment_no desc) o
+        where
+            to_char(payment_date,'YYYYMMDD') = to_char(sysdate,'YYYYMMDD')
+		order by 
+			o.payment_no desc
+	</select>
+	
+	<select id="adminManageTodayOrderCount" resultType="_int">
+		select
+			count(*)
+		from
+			payment
+		where
+			to_char(payment_date,'YYYYMMDD') = to_char(SYSDATE,'YYYYMMDD')
+	</select>
+	
+	<select id="adminManageNoAnswerCount" resultType="_int">
+		select
+			count(*)
+		from 
+			question_board b left join member a
+                    on b.member_id = a.id
+        where 
+        	answer = 'N'	
+	</select>
+	
+	<select id="searchGoodsOrder" resultMap="GoodsPaymentJoinMap">
+        select distinct
+	       payment_no, receiver, status, total_price, payment_date
+	    from
+	        (select distinct
+				*
+				from
+		            order_detail o
+				left join payment p
+				on o.order_no = p.order_no
+				order by 
+				p.payment_no desc) o
+			<choose>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('paymentNo')">
+					where 
+						payment_no like #{searchKeyword}
+				</when>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('receiver')">
+					where 
+						receiver like #{searchKeyword}
+				</when>
+			</choose>
+	</select>
+
+	<select id="searchGoodsOrderCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('paymentNo')">
+	        select
+	        	count(*)
+	        from
+	        	payment
+			where 
+				payment_no like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('receiver')">
+	        select
+	        	count(*)
+	        from
+	        	payment
+			where 
+				receiver like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="searchGoodsOrderDate" resultMap="GoodsPaymentJoinMap">
+       select distinct
+	       payment_no, receiver, status, total_price, payment_date
+	    from
+	        (select distinct
+				*
+				from
+		            order_detail o
+				left join payment p
+				on o.order_no = p.order_no
+				order by 
+				p.payment_no desc) o
+	    where 
+	        payment_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+	</select>
+
+	<select id="searchGoodsOrderDateCount" resultType="int" parameterType="java.util.HashMap">
+	    select
+	        count(*)
+	    from
+            payment
+		where 
+        	payment_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+	</select>
+	
+	<select id="selectMovieReservationList" resultType="movieReservation">
+		select
+			*
+		from
+			movie_reservation
+		order by
+			movie_reservation_id desc
+	</select>
+	
+	<select id="selectMovieReservationTotalCount" resultType="_int">
+		select
+			count(*)
+		from
+			movie_reservation
+	</select>
+	
+	<select id="selectOneMovieReservation" resultType="movieReservation">
+		select
+			*
+		from
+			movie_reservation
+		where
+			movie_reservation_id = #{movieReservationId}
+		order by
+			movie_reservation_id desc
+	</select>
+	
+	<select id="selectOneMovieReservationSeat" resultMap="movieJoinMap">
+		select
+			s.seat_no, s.is_booked
+		from
+			movie_reservation r
+		left join seat s
+		on r.movie_schedule_id = s.movie_schedule_id
+		where 
+			movie_reservation_id = #{movieReservationId}
+	</select>
+	
+	<select id="selectTodayMovieReservationList" resultType="movieReservation">
+		select
+			movie_reservation_id, member_id, title_kor, reg_date
+		from
+			movie_reservation
+		where
+			to_char(reg_date,'YYYYMMDD') = to_char(sysdate,'YYYYMMDD')
+		order by
+			reg_date desc
+	</select>
+	
+	<select id="adminManageTodayMovieReservationCount" resultType="_int">
+		select
+			count(*)
+		from
+			movie_reservation
+		where
+			to_char(reg_date,'YYYYMMDD') = to_char(sysdate,'YYYYMMDD')
+	</select>
+	
+	<select id="searchMovieReservation" resultType="movieReservation">
+	    select
+	        *
+	    from
+	       movie_reservation
+			<choose>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('movieReservationId')">
+					where 
+						movie_reservation_id like #{searchKeyword}
+				</when>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+					where 
+						memberId like #{searchKeyword}
+				</when>
+			</choose>
+	</select>
+
+	<select id="searchMovieReservationCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('movieReservationId')">
+	   	    select
+		        count(*)
+		    from
+		       movie_reservation
+			where 
+				movie_reservation_id like #{searchKeyword}
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('memberId')">
+	   	    select
+		        count(*)
+		    from
+		       movie_reservation
+			where 
+				member_id like #{searchKeyword}
+		</if>
+	</select>
+	
+	<select id="searchMovieReservationDate" resultType="movieReservation">
+	    select
+	        *
+	    from
+	       movie_reservation
+			<choose>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('regDate')">
+					where 
+        				reg_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+				</when>
+				<when test="searchType != null and !searchType.equals('') and searchType.equals('startDate')">
+					where 
+						start_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+				</when>
+			</choose>
+	</select>
+
+	<select id="searchMovieReservationDateCount" resultType="int" parameterType="java.util.HashMap">
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('regDate')">
+	   	    select
+		        count(*)
+		    from
+		       movie_reservation
+			where 
+        		reg_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+		</if>
+		<if test="searchType != null and !searchType.equals('') and searchType.equals('startDate')">
+	   	    select
+		        count(*)
+		    from
+		       movie_reservation
+			where 
+        		start_date between to_date(#{startDate}, 'YYYY-MM-DD') and to_date(#{endDate} || '23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+		</if>
+	</select>
+	
+	<delete id="deleteMovieReservation">
+		delete from
+			movie_reservation
+		where
+			movie_reservation_id = #{movieReservationId}
+	</delete>
+	
+	<select id="selectOnePayment2" resultType="payment">
+		select
+			*
+		from
+			payment
+		where
+			order_no = #{orderNo}
+	</select>
+	
+<!-- 	<delete id="deletePayment"> -->
+<!-- 		delete from -->
+<!-- 			payment -->
+<!-- 		where -->
+<!-- 			payment_no = #{paymentNo} -->
+<!-- 	</delete> -->
+
+	<update id="updateGoodsOrderDetailStatus">
+		update
+			order_detail
+		set
+			status = #{status}
+		where
+			order_detail_no = #{orderDetailNo}
+	</update>
+	
+	<select id="selectOnePayment3" resultType="payment">
+		select
+			*
+		from
+			payment
+		where
+			payment_no = #{paymentNo}
+	</select>
+	
+	<update id="adminPaymentInfoUpdate">
+		update
+			payment
+		set
+			receiver = #{receiver}, phone = #{phone}, address = #{address}, detail_address = #{detailAddress}, post_code = #{postCode}, order_comment = #{orderComment}
+		where
+			payment_no = #{paymentNo}
+	</update>
+	
+	<select id="selectGoodsOrderCancelList" resultMap="GoodsPaymentJoinMap">
+			select distinct
+			*
+			from
+	            order_detail o
+			left join payment p
+			on o.order_no = p.order_no
+	        where 
+	        	p.payment_no is not null and (status = '주문취소' or status = '환불완료')
+	        order by p.payment_no desc
+	</select>
+	
+	<select id="selectGoodsOrderCancelTotalCount" resultType="_int">
+			select distinct
+				count(*)
+			from
+	            order_detail o
+			left join payment p
+			on o.order_no = p.order_no
+	        where 
+	        	p.payment_no is not null and (status = '주문취소' or status = '환불완료')
+	</select>
+	
+	<update id="adminGoodsOrderStatusUpdate">
+		update
+			order_detail
+		set
+			status = #{status}
+		where
+			order_no = #{orderNo}
+	</update>
+	
+	<select id="selectMovieReservationStatusList" resultMap="movieJoinMap">
+		select distinct
+			c.movie_schedule_id, m.movie_id, m.image, m.title_kor, m.title_eng, c.theater_id, c.start_date, c.start_time
+		from
+			movie_schedule c
+		left join seat s
+		on c.movie_schedule_id = s.movie_schedule_id
+		left join movie m
+		on c.movie_id = m.movie_id
+		where 
+			c.start_date = '2022-01-07'
+		order by 
+			c.start_time asc
+	</select>
+	
+	<select id="selectMovieReservationStatusTotalCount" resultType="_int">
+        select distinct
+			count(*)
+		from
+			movie_schedule
+		where 
+			start_date = '2022-01-07'
+	</select>
+	
+	<select id="selectOneSeat" resultType="seat">
+		select
+			seat_no, is_booked
+		from
+			seat
+		where 
+			movie_schedule_id = #{movieScheduleId}
+	</select>
+	
+	<select id="selectMovieScheduleDate" resultType="movieSchedule">
+		select distinct 
+			start_date 
+		from 
+			movie_schedule 
+		order by 
+			start_date
+	</select>
+	
+	<select id="adminMovieReserStatusSearchDate" resultMap="movieJoinMap">
+		select distinct
+			c.movie_schedule_id, m.movie_id, m.image, m.title_kor, m.title_eng, c.theater_id, c.start_date, c.start_time
+		from
+			movie_schedule c
+		left join seat s
+		on c.movie_schedule_id = s.movie_schedule_id
+		left join movie m
+		on c.movie_id = m.movie_id
+		where 
+			c.start_date = #{startDate}
+		order by 
+			c.start_time asc
+	</select>
+	
+	<select id="adminMovieReserStatusSearchDateCount" resultType="_int">
+        select distinct
+			count(*)
+		from
+			movie_schedule
+		where 
+			start_date = #{startDate}
+	</select>
+	
+	<update id="adminDeliveryUpdate">
+		update
+			order_detail
+		set
+			status = '배송중'
+		where
+			order_detail_no = #{orderDetailNo}
+	</update>
+	
+	<update id="updateGoodsCancelOrderDetailStatus">
+		update
+			order_detail
+		set
+			status = #{status}
+		where
+			order_detail_no = #{orderDetailNo}
+	</update>
+	
+	<update id="updateNewTotalPrice">
+		update
+			payment 
+		set
+			total_price = #{newTotalPrice}
+		where
+			payment_no = #{paymentNo}
+	</update>
+	
+</mapper>

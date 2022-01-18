@@ -1,0 +1,40 @@
+@charset "UTF-8";
+
+.btn_tica {
+    position: fixed;
+    bottom: 40px;
+    right: 70px;
+    width: 150px;
+    height: 50px;
+    z-index: 999;
+    text-align: right;
+}
+
+.btn_tica a {
+    float: left;
+}
+.wviewT {
+    display: table;
+}
+
+.quick_img {
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.quick_img:hover {
+	cursor: pointer;
+}
+
+.btn_top {
+    display: block;
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: url(https://i.imgur.com/ICUdCR2.gif) no-repeat 0 0;
+    border: 1px solid #1c1c1c;
+    z-index: 999;
+    border-left: 0;
+}
